@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,12 +10,71 @@ Uri get adventUrl {
   return Uri.parse('https://adventofcode.com/$year/day/$day');
 }
 
-void main(List<String> args) async {
+Duration get timeTillNextDay {
+  final now = DateTime.now();
+  final next = now.copyWith(
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+    microsecond: 0,
+    day: now.day + 1,
+  );
+  final duration = next.difference(now);
+  return duration;
+}
+
+void main() async {
+  print('awaiting next day');
+
+  final future = Future.delayed(timeTillNextDay, loadDay);
+  late Timer timer;
+
+  void timerCallback() {
+    final duration = timeTillNextDay;
+    switch (duration) {
+      case Duration(inHours: > 2):
+        print('${duration.inHours} hour(s) remaining');
+        timer = Timer(Duration(hours: 1), timerCallback);
+
+      case Duration(inHours: 1):
+        print(
+            '${duration.inHours} hour and ${duration.inMinutes} minutes(s) remaining');
+        timer = Timer(Duration(minutes: duration.inMinutes), timerCallback);
+
+      case Duration(inMinutes: > 30):
+        print('${duration.inMinutes} minutes(s) remaining');
+        timer =
+            Timer(Duration(minutes: duration.inMinutes - 30), timerCallback);
+
+      case Duration(inMinutes: > 1):
+        print('${duration.inMinutes} minutes(s) remaining');
+        timer = Timer(Duration(minutes: 1), timerCallback);
+
+      case Duration(inSeconds: > 1):
+        print('${duration.inSeconds} second(s) remaining');
+        timer = Timer(Duration(seconds: 1), timerCallback);
+
+      case Duration(inMilliseconds: > 1):
+        print('${duration.inMilliseconds}ms remaining');
+        timer = Timer(Duration(milliseconds: 1), timerCallback);
+
+      default:
+    }
+  }
+
+  timer = Timer(Duration.zero, timerCallback);
+
+  await future;
+  timer.cancel();
+}
+
+Future<void> loadDay() async {
   final currentDay = DateTime.now().day;
 
   final dayDir = Directory('lib/day$currentDay/');
 
-  if (await dayDir.exists()) {
+  if (dayDir.existsSync()) {
     print('day $currentDay already exists!');
     return;
   }
