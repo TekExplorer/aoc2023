@@ -1,0 +1,11 @@
+// ignore_for_file: unused_import
+
+import 'dart:io';
+
+import 'package:collection/collection.dart';
+
+Future<void> main() async {
+  //
+  final lines = await readInput();
+  lines.length;
+}
